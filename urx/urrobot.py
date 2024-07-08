@@ -381,6 +381,23 @@ class URRobot(object):
         tpose.append(radius)
         return "{}({}[{},{},{},{},{},{}], a={}, v={}, r={})".format(command, prefix, *tpose)
 
+    def _format_servo_with_inv_kin(self, command, tpose, t=0.1, lookahead_time=0.2, gain=100):
+        tpose = [round(i, self.max_float_length) for i in tpose]
+        tpose.append(t)
+        tpose.append(lookahead_time)
+        tpose.append(gain)
+        return "servoj(get_inverse_kin(p[{},{},{},{},{},{}]), a=1.0, v=1.0, t={}, lookahead_time={}, gain={})".format(command, *tpose)
+
+    def servojInvKin(self, tpose, t=0.1, lookahead_time=0.2, gain=100, wait=False, threshold=None):
+        """
+        Send a servoj command to the robot. See URScript documentation.
+        """
+        prog = self._format_servo_with_inv_kin("servoj", tpose, t=t, lookahead_time=lookahead_time, gain=gain)
+        self.send_program(prog)
+        if wait:
+            self._wait_for_move(tpose[:6], threshold=threshold)
+            return self.getj()
+
     def movex(self, command, tpose, acc=0.01, vel=0.01, wait=True, relative=False, threshold=None):
         """
         Send a move command to the robot. since UR robotene have several methods this one
